@@ -1,3 +1,4 @@
+
 import tensorflow as tf
 from gen_train import get_train_text_and_image
 import numpy as np
@@ -9,6 +10,7 @@ IMAGE_WIDTH = 256
 MAX_CAPTCHA = 16
 CHAR_SET_LEN = 95
 
+LEARNING_RATE = 0.01
 
 X = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT * IMAGE_WIDTH])
 Y = tf.placeholder(tf.float32, [None, MAX_CAPTCHA * CHAR_SET_LEN])
@@ -171,7 +173,7 @@ def train():
     out = create_cnn()
 
     loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(out, Y))
-    optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
+    optimizer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(loss)
 
     predict = tf.reshape(out, [-1, MAX_CAPTCHA, CHAR_SET_LEN])
     max_idx_p = tf.argmax(predict, 2)
@@ -186,14 +188,14 @@ def train():
 
         step = 0
         while True:
-            batch_x, batch_y = get_next_batch(64)
+            batch_x, batch_y = get_next_batch(128)
             _, loss_ = sess.run([optimizer, loss], feed_dict={X: batch_x, Y: batch_y, keep_prob: 0.75})
             print(step, loss_)
             step += 1
 
             # 每100 step计算一次准确率
             if step % 100 == 0:
-                batch_x_test, batch_y_test = get_next_batch(100)
+                batch_x_test, batch_y_test = get_next_batch(128)
                 acc = sess.run(accuracy, feed_dict={X: batch_x_test, Y: batch_y_test, keep_prob: 1.})
                 print(step, acc)
                 # 如果准确率大于50%,保存模型,完成训练
@@ -203,8 +205,6 @@ def train():
 
 
 train()
-
-
 
 def crack_captcha():
     output = create_cnn()
